@@ -1,12 +1,12 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, useContext } from "react";
 import Modal from "react-modal";
+
 import closeImg from '../../assets/botao_fechar.svg'
 import incomeImg from '../../assets/entradas.svg'
 import outcomeImg from '../../assets/saidas.svg'
-import { api } from "../../Services/api";
+import { useTransactions } from "../../hooks/useTransactions";
 
 import { Container, TransactionTypeContainer, RadioBox } from "./styles";
-
 
 interface NewTransactionModalProps {
     isOpen: boolean;
@@ -14,29 +14,41 @@ interface NewTransactionModalProps {
 }
 
 export function NewTransactionModal({ isOpen, onRequestClose }: NewTransactionModalProps) {
+    const { createTransaction } = useTransactions();
 
     const [title, setTitle] = useState('');
-    const [value, setValue] = useState(0);
+    const [amount, setAmount] = useState(0);
     const [category, setCategory] = useState('');
     const [type, setType] = useState('deposit');
 
-    function handlerCreateNewTransaction(event: FormEvent) {
+    async function handlerCreateNewTransaction(event: FormEvent) {
         event.preventDefault();
 
-        const data ={
+        await createTransaction({
             title,
-            value,
+            amount,
             category,
-            type,
-        }
+            type
+        })
 
-        api.post('/transactions', data)  
-     }
+        setTitle('');
+        setAmount(0);
+        setCategory('');
+        setType('');
+        onRequestClose();
+
+    }
 
     return (
         <Modal
             isOpen={isOpen}
             onRequestClose={onRequestClose}
+            onAfterClose={() => {
+                setTitle('')
+                setAmount(0)
+                setCategory('')
+                setType('')
+            }}
             overlayClassName="react-modal-overlay"
             className="react-modal-content"
         >
@@ -58,8 +70,8 @@ export function NewTransactionModal({ isOpen, onRequestClose }: NewTransactionMo
                 <input
                     type="number"
                     placeholder="Valor"
-                    value={value}
-                    onChange={event => setValue(Number(event.target.value))}
+                    value={amount}
+                    onChange={event => setAmount(Number(event.target.value))}
                 />
 
                 <TransactionTypeContainer>
